@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week Display</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent;
+            font-size: 20px;
+            font-weight: bold;
+            color: #323130;
+        }
+        #weekDisplay {
+            min-height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="weekDisplay">Loading...</div>
+
+    <script>
+        function getISOWeek(date) {
+            try {
+                // Copy date so we don't modify original
+                const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+                // Set to nearest Thursday (ISO standard)
+                const dayNum = d.getUTCDay() || 7;
+                d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+                // Get first day of year
+                const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                // Calculate week number
+                const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                return weekNum;
+            } catch (e) {
+                console.error('Error in getISOWeek:', e);
+                return 1;
+            }
+        }
+
+        function getWeekRange(date) {
+            try {
+                const day = date.getDay() || 7; // Sunday = 7
+                const monday = new Date(date);
+                monday.setDate(date.getDate() - (day - 1));
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+
+                const format = function(d) {
+                    try {
+                        return d.toLocaleDateString("cs-CZ", { day: "2-digit", month: "2-digit" });
+                    } catch (e) {
+                        // Fallback if Czech locale not supported
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        return day + '.' + month;
+                    }
+                };
+                return format(monday) + ' - ' + format(sunday);
+            } catch (e) {
+                console.error('Error in getWeekRange:', e);
+                return 'N/A';
+            }
+        }
+
+        function updateWeekDisplay() {
+            try {
+                const today = new Date();
+                const weekNum = getISOWeek(today);
+                const weekType = weekNum % 2 === 0 ? "sudý" : "lichý";
+                const range = getWeekRange(today);
+
+                const displayElement = document.getElementById("weekDisplay");
+                if (displayElement) {
+                    displayElement.innerText = "Dnes je " + weekType + " týden (" + range + ")";
+                } else {
+                    console.error('weekDisplay element not found');
+                }
+            } catch (e) {
+                console.error('Error in updateWeekDisplay:', e);
+                const displayElement = document.getElementById("weekDisplay");
+                if (displayElement) {
+                    displayElement.innerText = "Error loading week info";
+                }
+            }
+        }
+
+        // Multiple ways to ensure the script runs
+        if (document.readyState === 'complete') {
+            updateWeekDisplay();
+        } else if (document.readyState === 'interactive') {
+            updateWeekDisplay();
+        } else {
+            document.addEventListener('DOMContentLoaded', updateWeekDisplay);
+            window.addEventListener('load', updateWeekDisplay);
+        }
+
+        // Fallback - run after 1 second regardless
+        setTimeout(updateWeekDisplay, 1000);
+    </script>
+</body>
+</html>
